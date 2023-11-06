@@ -11,6 +11,8 @@ Go to workdir `cd gptTelegramBot`
 
 Install via pip: `pip install -r req.txt`
 
+Update gpt library `pip install -U g4f`
+
 ### Configuration
 Most configurations are in `setting.py`, others are in backend configurations.
 
