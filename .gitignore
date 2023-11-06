@@ -1,0 +1,13 @@
+.env
+.env.docker
+__pycache__
+.pyc
+.idea
+.venv
+.dockerignore
+.log
+media
+static
+migrations
+.xml
+logs
