@@ -25,12 +25,13 @@ class Command(BaseCommand):
     def __init__(self):
         super().__init__()
         self.dev = Profile.objects.first()  # assuming that you(dev) are first user
-        self.developer = User(
-            id=self.dev.tg_id,
-            first_name=self.dev.first_name,
-            is_bot=self.dev.is_bot,
-            username=self.dev.name
-        )
+        if self.dev:
+            self.developer = User(
+                id=self.dev.tg_id,
+                first_name=self.dev.first_name,
+                is_bot=self.dev.is_bot,
+                username=self.dev.name
+            )
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         self.model = g4f.models.default
         self.model_name = "Default"
@@ -142,7 +143,7 @@ class Command(BaseCommand):
         response = self.generate_response(text)
         msg_id = message.message_id
         self.bot.sendMessage(chat_id=chat_id, text=response, reply_to_message_id=msg_id)
-        if message.from_user.first_name != self.developer.first_name:
+        if self.dev and message.from_user.first_name != self.developer.first_name:
             self.bot.sendMessage(
                 chat_id=self.dev.tg_id,
                 text=f"User {user.first_name} sent message '{text}' and got response '{response}'"
