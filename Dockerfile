@@ -11,5 +11,5 @@ RUN pip install -r requirements.txt
 CMD python manage.py makemigrations \
     && python manage.py migrate \
     && python manage.py createcachetable \
-    && python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='root').exists() or User.objects.create_sepuruser('root', 'root@gmail.com', 'root')" \
+    && python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='root').exists() or User.objects.create_superuser('root', 'root@gmail.com', 'root')" \
     && python manage.py bot

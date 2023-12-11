@@ -5,7 +5,11 @@ import logging
 
 from django.core.management.base import BaseCommand
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from telegram import Update, User, Bot, ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    Update, User, Bot, ChatAction, InlineKeyboardButton,
+    InlineKeyboardMarkup, BotCommand, MenuButtonCommands,
+    MenuButtonDefault
+)
 from telegram.ext import Updater, Filters, MessageHandler, CommandHandler, CallbackQueryHandler
 
 from src.models import Message, Profile
@@ -13,7 +17,7 @@ from src.models import Message, Profile
 logger = logging.getLogger()
 at = os.getenv("BOT_API_TOKEN")
 updater = Updater(token=at, use_context=True)
-
+path_to_help_text_file = "help_text.txt"
 
 class Command(BaseCommand):
     help = "run to start tgBot"
@@ -41,8 +45,26 @@ class Command(BaseCommand):
         updater.dispatcher.add_handler(CommandHandler("help", self.help_command))
         updater.dispatcher.add_handler(CommandHandler("start", self.start_command))
         updater.dispatcher.add_handler(CommandHandler("change_model", self.change_model_command))
+        updater.dispatcher.add_error_handler(self.error)
+
+        c1 = BotCommand(command='start', description='Start the Bot')
+        c2 = BotCommand(command='help', description='Click for Help')
+        c3 = BotCommand(command='change_model', description='Choose language model')
+        self.bot.set_my_commands([c1, c2, c3])
+
+        if os.path.isfile(path_to_help_text_file):
+            with open("help_text.txt", "r", encoding="utf-8-sig") as file:
+                self.help_text = file.read()
+        else:
+            self.help_text = "Hi there! What can I do for you?"
 
         updater.start_polling(allowed_updates=Update.ALL_TYPES)
+
+    @staticmethod
+    def error(update, context):
+        error = f'Update {update} caused error {context.error}'
+        logger.debug(error)
+        print(error)
 
     def handle(self, *args, **options):
         """Handle the incoming messages"""
@@ -50,35 +72,22 @@ class Command(BaseCommand):
         message_handler = MessageHandler(Filters.text, self.handle_message)
         updater.dispatcher.add_handler(message_handler)
 
-    @staticmethod
-    def help_command(update: Update, context) -> None:
+    def help_command(self, update: Update, context) -> None:
         """Displays info on how to use the bot."""
 
-        update.message.reply_text(
-            "Use /start to test this bot. "
-            "Allowed commands:\n"
-            "/start - to start bot\n"
-            "/help - to get more info about this bot\n"
-            "/change_model - to change language model"
-        )
+        update.message.reply_text(self.help_text)
 
     def start_command(self, update: Update, context) -> None:
         """Displays info on how to use the bot."""
 
-        menu_main = [
-            [InlineKeyboardButton('Option 1', callback_data='m1')],
-            [InlineKeyboardButton('Option 2', callback_data='m2')],
-            [InlineKeyboardButton('Option 3', callback_data='m3')]
-        ]
-        reply_markup = InlineKeyboardMarkup(menu_main)
+        self.bot.set_chat_menu_button(update.message.chat.id, MenuButtonCommands(type='commands'))
 
         update.message.reply_text(
-            f"I`m a (beta) {self.model_name} language model. Send me any sentence (best in English) "
+            f"I`m a (beta) {'GPT-3' if self.model_name == 'Default' else self.model_name} language model."
+            f" Send me any sentence (best in English) "
             f"and i will try to answer\n"
             f"For example, send me 'Who is your creator?'\n"
-            f"Use /help to get all info\n"
-            f"If generating response are failed, try to change model by /change_model command",
-            reply_markup=reply_markup
+            f"Use /help to get all info about me\n"
         )
 
     def change_model_command(self, update: Update, context) -> None:
@@ -107,6 +116,7 @@ class Command(BaseCommand):
         self.model = self.get_from_old_name(query.data)
         self.model_name = query.data
 
+        logger.debug(f"User change model to: '{self.model_name}'")
         query.edit_message_text(text=f"Selected option: {query.data}")
 
     def handle_message(self, update: Update, context):

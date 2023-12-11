@@ -15,3 +15,5 @@
 Remember, while I strive to provide accurate and helpful information, please use your own judgment and verify any critical information independently.
 
 So go ahead and ask me anything or share your problem—I'm here to assist you! Let's make your experience with our Telegram bot informative, engaging, and problem-solving.
+
+If generating response are failed, try to change model by /change_model command
